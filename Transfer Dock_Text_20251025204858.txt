@@ -1,0 +1,49 @@
+
+function emerge
+    set -l args $argv
+    # ====== GENTOO STYLE ARGUMENTS ======
+    # -a → ask (спрашивать перед действием)
+    if contains -- -a $args
+        set -e args[(contains -i -a $args)]
+        set ask 1
+    end
+    # -v → verbose
+    if contains -- -v $args
+        set -e args[(contains -i -v $args)]
+        set verbose 1
+    end
+    # -u → update (upgrade)
+    if contains -- -u $args
+        set -e args[(contains -i -u $args)]
+        set upgrade 1
+    end
+    # -D → deep (в Arch нет аналога, но можно просто игнорировать)
+    if contains -- -D $args
+        set -e args[(contains -i -D $args)]
+    end
+    # -N → newuse (тоже игнор, фича Portage)
+    if contains -- -N $args
+        set -e args[(contains -i -N $args)]
+    end
+    # ====== ФУНКЦИОНАЛ ======
+    # emerge -avuDN @world → обновление системы
+    if test (count $args) -eq 1 -a "$args[1]" = "@world"
+        if test "$ask"
+            echo ">>> Ask mode enabled (press Enter to continue)"
+            read
+        end
+        echo ">>> Updating world (system)..."
+        sudo pacman -Syu
+        return
+    end
+    # emerge -S pkg → установка пакета
+    if test "$upgrade"
+        set cmd sudo pacman -Syu
+    else
+        set cmd sudo pacman -S
+    end
+    if test "$verbose"
+        echo ">>> Running: $cmd $args"
+    end
+    eval $cmd $args
+end
